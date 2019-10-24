@@ -11,8 +11,9 @@ setup(
   download_url = 'https://github.com/user/reponame/archive/v_01.tar.gz',    # I explain this later on
   keywords = ['mHG', 'GOrilla', 'Gene Ontology'],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
-          'validators',
+          'requests',
           'beautifulsoup4',
+		  'pandas',
       ],
   classifiers=[
     'Development Status :: 4 - Beta',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
