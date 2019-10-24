@@ -12,7 +12,9 @@ pip install pyGOrilla
   
   GOr = GOrillaEvaluator() # note, this constructor can take parameters. See code for documentation.
   
-  restable = GOrillaEvaluator.evaluate(genelist, outputfile)  
+  restable = GOrillaEvaluator.evaluate_list(genelist, outputfile (optional))
   
+  GOrillaEvaluator.evaluate_file_folder(inputpath)
+
   
   Enjoy!
