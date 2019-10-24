@@ -2,13 +2,12 @@
     A http request wrapper providing a python interface for GOrilla.
     Currently output is dumped to an html file. In future should provide a parsed python object.
 """
-import os, requests, time, sys
+import os, requests, time, sys, logging
 from multiprocessing import freeze_support, Process, Queue
 import pandas as pd
 from bs4 import BeautifulSoup
 
 from HTMLTableParser import HTMLTableParser
-done = False
 
 class GOrillaEvaluator:
     parameters = {"application": "gorilla", "run_mode": "mhg", "species": "HOMO_SAPIENS", "db": "proc",
@@ -40,7 +39,7 @@ class GOrillaEvaluator:
         table = None
         poll_done = False
         if response.status_code == 200:
-            print('polling results', end='')
+            logging.info('polling results', end='')
             while not poll_done:
                 response2 = GOrillaEvaluator._auto_retry(response.url)
                 if response2.status_code == 200:
@@ -58,13 +57,13 @@ class GOrillaEvaluator:
                             table.set_index("GO term")
 
                     else:
-                        print('.', end='')
+                        logging.debug('.', end='')
                         time.sleep(GOrillaEvaluator.sleep_duration)
                 else:
-                    print('error:' + str(response.status_code))
+                    logging.error(str(response.status_code))
         else:
-            print('error:' + str(response.status_code))
-        print(' elapsed {%s}' % (time.time()-tic))
+            logging.error(str(response.status_code))
+        logging.info(' elapsed {%s}' % (time.time()-tic))
         return table
 
     @staticmethod
@@ -78,18 +77,18 @@ class GOrillaEvaluator:
                     response = requests.post(uri, files=parameters)
                 requesting = False
             except requests.exceptions.ConnectionError:
-                print('you are being throttled')
+                logging.warning('you are being throttled')
                 time.sleep(GOrillaEvaluator.sleep_duration)
         return response
 
 
 def consume(queue, mypath):
-    while not done:
+    while True:
         try:
             tgt = queue.get(timeout=30)
             if tgt is None:
                 return
-            print(tgt)
+            logging.info(tgt)
             with open(os.path.join(mypath, tgt), 'r') as f:
                 targets = f.read()
 
@@ -102,7 +101,7 @@ def consume(queue, mypath):
 
 def main():
     if len(sys.argv) == 1:
-        print("""Usage options:
+        logging.error("""Usage options:
                  1. python pyGOrilla.py <input filename>
                  Such that <input file> contains sorted list of gene names.
                  2. python pyGOrilla.py <input folder>
@@ -115,17 +114,17 @@ def main():
         exit(0)
     else:
         if os.path.isfile(sys.argv[1]):
-            print('Running on single file input')
+            logging.info('Running on single file input')
             try:
                 with open(sys.argv[1], 'r') as f:
                     targets = f.read()
             except:
-                print('Failed reading input file!')
+                logging.error('Failed reading input file!')
             GOr = GOrillaEvaluator()
             GOr.evaluate(targets, sys.argv[1] + ".GOrilla.html")
 
         elif os.path.exists(sys.argv[1]):
-            print('Running on directory with multiple file inputs')
+            logging.info('Running on directory with multiple file inputs')
             mypath = sys.argv[1]
             freeze_support()
             q = Queue()
@@ -141,7 +140,7 @@ def main():
             for tgt in onlyfiles:
                 if os.path.exists(os.path.join(mypath, tgt.split('.')[0] + '.GOrilla.html')):
                     continue
-                print(tgt)
+                logging.info(tgt)
                 q.put(tgt)
 
             for i in range(num_workers):
@@ -150,8 +149,8 @@ def main():
             for consumer in consumers:
                 consumer.join()
         else:
-            print('Input not recognized!')
-    print('Done')
+            logging.error('Input not recognized!')
+    logging.info('Done')
 
 
 if __name__ == '__main__':
