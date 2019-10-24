@@ -6,8 +6,7 @@ import os, requests, time, sys, logging
 from multiprocessing import freeze_support, Process, Queue
 import pandas as pd
 from bs4 import BeautifulSoup
-
-from HTMLTableParser import HTMLTableParser
+from pyGOrilla.HTMLTableParser import HTMLTableParser
 
 class GOrillaEvaluator:
     parameters = {"application": "gorilla", "run_mode": "mhg", "species": "HOMO_SAPIENS", "db": "proc",
@@ -26,7 +25,7 @@ class GOrillaEvaluator:
             for k, v in override_params:
                 self.parameters[k] = v
 
-    def evaluate(self, targets, outfilename=None):
+    def evaluate_list(self, targets, outfilename=None):
         """
 
         :param targets: input list of gene names
@@ -66,6 +65,46 @@ class GOrillaEvaluator:
         logging.info(' elapsed {%s}' % (time.time()-tic))
         return table
 
+    def evaluate_file_folder(self, filein, outfilename=None):
+        if os.path.isfile(filein):
+            logging.info('Running on single file input')
+            try:
+                with open(filein, 'r') as f:
+                    targets = f.read()
+            except:
+                logging.error('Failed reading input file!')
+            return self.evaluate_list(targets, outfilename)
+
+        elif os.path.exists(sys.argv[1]):
+            logging.info('Running on directory with multiple file inputs')
+            mypath = filein
+            freeze_support()
+            q = Queue()
+            consumers = []
+            num_workers = 4
+            for i in range(num_workers):
+                consumer = Process(target=self.consume, args=(q, mypath, ))
+                consumer.start()
+                consumers.append(consumer)
+
+            onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and os.path.splitext(f)[1]=='']
+
+            for tgt in onlyfiles:
+                if os.path.exists(os.path.join(mypath, tgt.split('.')[0] + '.GOrilla.html')):
+                    continue
+                logging.info(tgt)
+                q.put(tgt)
+
+            for i in range(num_workers):
+                q.put(None)
+
+            for consumer in consumers:
+                consumer.join()
+        else:
+            logging.error('Input not recognized!')
+
+        return None
+
     @staticmethod
     def _auto_retry(uri, parameters=None):
         requesting = True
@@ -93,7 +132,7 @@ def consume(queue, mypath):
                 targets = f.read()
 
             GOr = GOrillaEvaluator()
-            GOr.evaluate(targets, os.path.join(mypath, tgt + '.GOrilla.html'))
+            GOr.evaluate_list(targets, os.path.join(mypath, tgt + '.GOrilla.html'))
 
         except:
             pass
@@ -102,54 +141,16 @@ def consume(queue, mypath):
 def main():
     if len(sys.argv) == 1:
         logging.error("""Usage options:
-                 1. python pyGOrilla.py <input filename>
-                 Such that <input file> contains sorted list of gene names.
-                 2. python pyGOrilla.py <input folder>
-                 Such that <input folder> contains multiple files with sorted list of gene names, where the files have a blank file extention (e.g. "filename.").
-                 3. In python code: 
                  from pyGOrilla import GOrillaEvaluator
                  GOr = GOrillaEvaluator() # note, this constructor can take parameters
-                 GOrillaEvaluator.evaluate(genelist, outputfile)
+                 restable = GOrillaEvaluator.evaluate_list(genelist, outputfile (optional))
+                 GOrillaEvaluator.evaluate_file_folder(inputpath)
                 """)
         exit(0)
     else:
-        if os.path.isfile(sys.argv[1]):
-            logging.info('Running on single file input')
-            try:
-                with open(sys.argv[1], 'r') as f:
-                    targets = f.read()
-            except:
-                logging.error('Failed reading input file!')
+        if os.path.exists(sys.argv[1]):
             GOr = GOrillaEvaluator()
-            GOr.evaluate(targets, sys.argv[1] + ".GOrilla.html")
-
-        elif os.path.exists(sys.argv[1]):
-            logging.info('Running on directory with multiple file inputs')
-            mypath = sys.argv[1]
-            freeze_support()
-            q = Queue()
-            consumers = []
-            num_workers = 4
-            for i in range(num_workers):
-                consumer = Process(target=consume, args=(q, mypath, ))
-                consumer.start()
-                consumers.append(consumer)
-
-            onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and os.path.splitext(f)[1]=='']
-
-            for tgt in onlyfiles:
-                if os.path.exists(os.path.join(mypath, tgt.split('.')[0] + '.GOrilla.html')):
-                    continue
-                logging.info(tgt)
-                q.put(tgt)
-
-            for i in range(num_workers):
-                q.put(None)
-
-            for consumer in consumers:
-                consumer.join()
-        else:
-            logging.error('Input not recognized!')
+            GOr.evaluate_file_folder(sys.argv[1])
     logging.info('Done')
 
 
