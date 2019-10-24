@@ -1,5 +1,5 @@
 # PyGOrilla
-Python wrapper for GOrilla - 
+Python wrapper for [GOrilla](http://cbl-gorilla.cs.technion.ac.il/)
 
 GOrilla: a tool for discovery and visualization of enriched GO terms in ranked gene lists
 E Eden, R Navon, I Steinfeld, D Lipson, Z Yakhini - BMC bioinformatics, 2009
