@@ -38,7 +38,7 @@ class GOrillaEvaluator:
         table = None
         poll_done = False
         if response.status_code == 200:
-            logging.info('polling results', end='')
+            logging.info('polling results')
             while not poll_done:
                 response2 = GOrillaEvaluator._auto_retry(response.url)
                 if response2.status_code == 200:
@@ -56,7 +56,7 @@ class GOrillaEvaluator:
                             table.set_index("GO term")
 
                     else:
-                        logging.debug('.', end='')
+                        logging.debug('.')
                         time.sleep(GOrillaEvaluator.sleep_duration)
                 else:
                     logging.error(str(response.status_code))
