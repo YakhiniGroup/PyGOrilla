@@ -42,7 +42,7 @@ class GOrillaEvaluator:
         if response.status_code == 200:
             self.logger.info('polling results')
             while not poll_done:
-                response2 = GOrillaEvaluator._auto_retry(response.url)
+                response2 = self._auto_retry(response.url)
                 if response2.status_code == 200:
                     if "<title>Calculating Enrichment</title>" not in response2.text:
                         poll_done = True
