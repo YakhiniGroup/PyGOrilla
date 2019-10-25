@@ -8,13 +8,16 @@ E Eden, R Navon, I Steinfeld, D Lipson, Z Yakhini - BMC bioinformatics, 2009
 pip install pyGOrilla
 
 ## Usage options:
-  from pyGOrilla import GOrillaEvaluator
-  
-  GOr = GOrillaEvaluator() # note, this constructor can take parameters. See code for documentation.
-  
-  restable = GOrillaEvaluator.evaluate_list(genelist, outputfile (optional))
-  
-  GOrillaEvaluator.evaluate_file_folder(inputpath)
+  See Examples\SimpleExample.ipynb notebook for usage reference
 
-  
+# References
+
+If you choose to use this application please cite:
+
+* Eran Eden*, Roy Navon*, Israel Steinfeld, Doron Lipson and Zohar Yakhini. "GOrilla: A Tool For Discovery And Visualization of Enriched GO Terms in Ranked Gene Lists", BMC Bioinformatics 2009, 10:48.
+ 
+* Eran Eden, Doron Lipson, Sivan Yogev, Zohar Yakhini. "Discovering Motifs in Ranked Lists of DNA sequences", PLoS Computational Biology, 3(3):e39, 2007.
+ 
+
+
   Enjoy!
