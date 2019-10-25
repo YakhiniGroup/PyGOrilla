@@ -21,6 +21,8 @@ class GOrillaEvaluator:
         e.g. {"species": "MUS_MUSCULUS"} to change species list.
         {"db": "all"} to change GO from process to process/function/component.
         """
+        self.logger = logging.getLogger("pyGOrilla")
+
         if override_params is not None:
             for k, v in override_params:
                 self.parameters[k] = v
@@ -34,11 +36,11 @@ class GOrillaEvaluator:
         """
         self.parameters["target_set"] = targets
         tic = time.time()
-        response = GOrillaEvaluator._auto_retry('http://cbl-gorilla.cs.technion.ac.il/servlet/GOrilla', self.parameters)
+        response = self._auto_retry('http://cbl-gorilla.cs.technion.ac.il/servlet/GOrilla', self.parameters)
         table = None
         poll_done = False
         if response.status_code == 200:
-            logging.info('polling results')
+            self.logger.info('polling results')
             while not poll_done:
                 response2 = GOrillaEvaluator._auto_retry(response.url)
                 if response2.status_code == 200:
@@ -56,27 +58,27 @@ class GOrillaEvaluator:
                             table.set_index("GO term")
 
                     else:
-                        logging.debug('.')
+                        self.logger.debug('.')
                         time.sleep(GOrillaEvaluator.sleep_duration)
                 else:
-                    logging.error(str(response.status_code))
+                    self.logger.error(str(response.status_code))
         else:
-            logging.error(str(response.status_code))
-        logging.info(' elapsed {%s}' % (time.time()-tic))
+            self.logger.error(str(response.status_code))
+        self.logger.info(' elapsed {%s}' % (time.time()-tic))
         return table
 
     def evaluate_file_folder(self, filein, outfilename=None):
         if os.path.isfile(filein):
-            logging.info('Running on single file input')
+            self.logger.info('Running on single file input')
             try:
                 with open(filein, 'r') as f:
                     targets = f.read()
             except:
-                logging.error('Failed reading input file!')
+                self.logger.error('Failed reading input file!')
             return self.evaluate_list(targets, outfilename)
 
         elif os.path.exists(sys.argv[1]):
-            logging.info('Running on directory with multiple file inputs')
+            self.logger.info('Running on directory with multiple file inputs')
             mypath = filein
             freeze_support()
             q = Queue()
@@ -92,7 +94,7 @@ class GOrillaEvaluator:
             for tgt in onlyfiles:
                 if os.path.exists(os.path.join(mypath, tgt.split('.')[0] + '.GOrilla.html')):
                     continue
-                logging.info(tgt)
+                self.logger.info(tgt)
                 q.put(tgt)
 
             for i in range(num_workers):
@@ -101,12 +103,11 @@ class GOrillaEvaluator:
             for consumer in consumers:
                 consumer.join()
         else:
-            logging.error('Input not recognized!')
+            self.logger.error('Input not recognized!')
 
         return None
 
-    @staticmethod
-    def _auto_retry(uri, parameters=None):
+    def _auto_retry(self, uri, parameters=None):
         requesting = True
         while requesting:
             try:
@@ -116,18 +117,19 @@ class GOrillaEvaluator:
                     response = requests.post(uri, files=parameters)
                 requesting = False
             except requests.exceptions.ConnectionError:
-                logging.warning('you are being throttled')
+                self.logger.warning('you are being throttled')
                 time.sleep(GOrillaEvaluator.sleep_duration)
         return response
 
 
 def consume(queue, mypath):
+    logger = logging.getLogger("pyGOrilla")
     while True:
         try:
             tgt = queue.get(timeout=30)
             if tgt is None:
                 return
-            logging.info(tgt)
+            logger.info(tgt)
             with open(os.path.join(mypath, tgt), 'r') as f:
                 targets = f.read()
 
@@ -139,8 +141,9 @@ def consume(queue, mypath):
 
 
 def main():
+    logger = logging.getLogger("pyGOrilla")
     if len(sys.argv) == 1:
-        logging.error("""Usage options:
+        logger.error("""Usage options:
                  from pyGOrilla import GOrillaEvaluator
                  GOr = GOrillaEvaluator() # note, this constructor can take parameters
                  restable = GOrillaEvaluator.evaluate_list(genelist, outputfile (optional))
@@ -151,7 +154,7 @@ def main():
         if os.path.exists(sys.argv[1]):
             GOr = GOrillaEvaluator()
             GOr.evaluate_file_folder(sys.argv[1])
-    logging.info('Done')
+    logger.info('Done')
 
 
 if __name__ == '__main__':
