@@ -19,6 +19,8 @@ If you choose to use this application please cite:
 * Eran Eden, Doron Lipson, Sivan Yogev, Zohar Yakhini. "Discovering Motifs in Ranked Lists of DNA sequences", PLoS Computational Biology, 3(3):e39, 2007.
  
  
+# Notes
+
 Please note: To prevent the GOrilla server from overloading we have an informal policy to limit calls to to 1,000 daily (per user).
 
   Enjoy!
