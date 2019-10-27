@@ -8,7 +8,7 @@ E Eden, R Navon, I Steinfeld, D Lipson, Z Yakhini - BMC bioinformatics, 2009
 pip install pyGOrilla
 
 ## Usage options:
-  See Examples\SimpleExample.ipynb notebook for usage reference
+  See [Examples\SimpleExample.ipynb](https://github.com/YakhiniGroup/PyGOrilla/blob/master/examples/SimpleExample.ipynb) notebook for usage reference
 
 # References
 
